@@ -35,10 +35,11 @@ This function should only modify configuration layer settings."
    dotspacemacs-configuration-layers
    '(javascript
      ;; Private layers
-     (conf-c-c++ :location local)
+    (conf-c-c++ :location local)
      ;; ----------------------------------------------------------------
      ;;; Feature
      git
+
      gtags
      multiple-cursors
      pdf
@@ -85,9 +86,22 @@ This function should only modify configuration layer settings."
    dotspacemacs-additional-packages
    '(
      nasm-mode
+     x86-lookup
+     base16-theme
+     clang-format
+     (doom-palenight-theme :location local)
+     (weyland-yutani-theme :location local)
      (all-the-icons  :repo  "domtronn/all-the-icons.el"
                      :fetcher  github
                      :files  (:defaults "data"))
+
+     (zenburn-theme :repo "bbatsov/zenburn-emacs" :fetcher github)
+
+     (grandshell-theme
+      :url "https://framagit.org/steckerhalter/grandshell-theme.git"
+      :fetcher git)
+
+     (zerodark-theme :fetcher github :repo "NicolasPetton/zerodark-theme")
 
      (doom-themes :repo "hlissner/emacs-doom-themes" :fetcher github
                   :files (:defaults "themes/*.el"))
@@ -103,7 +117,6 @@ This function should only modify configuration layer settings."
 
      (visual-fill-column :fetcher github
                          :repo "joostkremers/visual-fill-column")
-
      ;;
      ) ;; dotspacemacs-additional-packages
 
@@ -228,7 +241,17 @@ It should only modify the values of Spacemacs settings."
    ;; List of themes, the first of the list is loaded when spacemacs starts.
    ;; Press `SPC T n' to cycle to the next theme in the list (works great
    ;; with 2 themes variants, one dark and one light)
-   dotspacemacs-themes '(doom-one
+   dotspacemacs-themes '(
+                         doom-palenight
+                         weyland-yutani
+                         base16-material-palenight
+                         base16-nord
+                         doom-spacegrey
+                         zerodark
+                         grandshell
+                         doom-nova
+                         doom-nord
+                         doom-one
                          spacemacs-dark
                          spacemacs-light)
 
@@ -247,7 +270,13 @@ It should only modify the values of Spacemacs settings."
 
    ;; Default font, or prioritized list of fonts. `powerline-scale' allows to
    ;; quickly tweak the mode-line size to make separators look not too crappy.
-   dotspacemacs-default-font '("Fira Code"
+   dotspacemacs-default-font '("Courier Prime Code"
+                               ;"Courier Code"
+                               ;"Noto Sans Mono"
+                               ;"Source Code Pro"
+                               ;"gomme"  ;; get bitmap fonts here:
+                               ;; https://github.com/Tecate/bitmap-fonts
+                               ;"Fira Code"
                                :size 16
                                :weight normal
                                :width normal)
@@ -483,6 +512,7 @@ This function is called immediately after `dotspacemacs/init', before layer
 configuration.
 It is mostly for variables that should be set before packages are loaded.
 If you are unsure, try setting them in `dotspacemacs/user-config' first."
+  (add-to-list 'custom-theme-load-path "~/.spacemacs.d/themes/")
   )
 
 (defun dotspacemacs/user-load ()
@@ -505,12 +535,19 @@ before packages are loaded."
                      (split-string-and-unquote
                       (getenv-internal "PATH" initial-environment) ":") ":"))
 
+  (setq neo-theme 'icons)
+
+  (use-package lean-mode
+    :config
+    (setq lean-rootdir "~/Dropbox/School/SPRING2019/CS6021 Math Logic/lean")
+    )
   ;; use space to indent by default
   (setq-default indent-tabs-mode nil)
   (set-default 'truncate-lines t)
 
-  ;; # Prefer 8 spaced tabs.
-  (defvar tab 8)
+  ;; Prefer 4 spaced tabs.
+  (defvar tab 4)
+
   (setq-default tab-width tab)
 
   (setq-default evil-escape-delay 0.3)
@@ -521,19 +558,39 @@ before packages are loaded."
 
   (global-set-key (kbd "M-i") 'indent-relative)
 
+
+  ;; C-C++ CONFIGURATIONS
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  (setq c-basic-offset 4)
+
+  (use-package irony
+    :config
+    (setq irony-additional-clang-options '("-std=c++11"))
+    )
+
   ;; Undecided whether to add semantic into conf-c-c++ layer
   (use-package semantic
     :init
     (add-hook 'c-mode-common-hook
-              (lambda ()
-                (add-to-list 'semantic-default-submodes 'global-semantic-stickyfunc-mode)
-                (semantic-mode 1)
-                ))
+      (lambda ()
+        (add-to-list 'semantic-default-submodes
+                     'global-semantic-stickyfunc-mode)
+        (semantic-mode 1)
+        ))
+    )
+
+  (use-package x86-lookup
+    :ensure t
+    :mode "\\.\\(asm\\|s\\)$"
+    :config
+    (setq  x86-lookup-pdf "~/Dropbox/Code/Intel64-and_IA-32 Architectures-SoftwareDeveloperManual.pdf")
     )
 
   (use-package nasm-mode
     :ensure t
     :config
+    (spacemacs/set-leader-keys-for-major-mode 'nasm-mode "h" 'x86-lookup)
     (add-hook 'asm-mode-hook 'nasm-mode)
     )
 
@@ -542,6 +599,24 @@ before packages are loaded."
     (setq disaster-objdump "objdump -d -M intel -m i386 -Sl --no-show-raw-insn")
     (setq disaster-cflags "-m32")
     )
+
+  (use-package clang-format
+    :config
+    (defun clang-format-buffer-smart ()
+      "Reformat buffer if .clang-format exists in the projectile root."
+      (when (f-exists? (expand-file-name ".clang-format" (projectile-project-root)))
+        (clang-format-buffer)))
+
+    (defun clang-format-buffer-smart-on-save ()
+      "Add auto-save hook for clang-format-buffer-smart."
+      (add-hook 'before-save-hook 'clang-format-buffer-smart nil t))
+
+    (spacemacs/add-to-hooks 'clang-format-buffer-smart-on-save
+                            '(c-mode-hook c++-mode-hook))
+    )
+
+  ;; ORG-MODE CONFIGURATIONS
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
   ;; everything after this point needs to be put into a new layer.
   (use-package pdf-tools
@@ -565,6 +640,10 @@ before packages are loaded."
                   org-startup-indented t       ; indent each heading and everything under
                   org-hide-emphasis-markers t) ; hide *bold*, _under_, etc, markers
     (setq org-startup-with-inline-images t)
+
+    (setq org-latex-inline-image-rules
+          '(("file" . "\\.\\(pdf\\|jpeg\\|jpg\\|png\\|ps\\|eps\\|tikz\\|pgf\\|svg\\|gif\\)\\'")))
+
     ;; Enlarge the inline latex previews
     (setq org-format-latex-options (plist-put org-format-latex-options :scale 1.6))
 
@@ -587,10 +666,6 @@ before packages are loaded."
        (python . t)   (R . t)      (js . t)      (gnuplot . t)     (shell . t)
        (sql . t)
        ))
-
-    ;; Make bullet pts actually look like bullet pts.
-    (setq org-latex-inline-image-rules
-          '(("file" . "\(?:eps\|jp\(?:e?g\)\|p\(?:df\|gf\|ng\|s\)\|svg\|tikz\)")))
 
     (defun my|org-hide-emphasis-markers ()
       "Toggle whether or not the emphasis markers ~, =, *, _ are displayed"
@@ -652,7 +727,7 @@ This function is called at the very end of Spacemacs initialization."
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (yapfify xterm-color ws-butler winum which-key web-beautify volatile-highlights visual-fill-column vi-tilde-fringe uuidgen use-package toc-org spaceline powerline smeargle shell-pop restart-emacs rainbow-delimiters pyvenv pytest pyenv-mode py-isort px popwin pip-requirements pcre2el paradox spinner orgit org-projectile org-category-capture org-present org-pomodoro alert log4e gntp org-pdfview pdf-tools tablist org-mime org-download org-bullets open-junk-file neotree multi-term move-text mmm-mode markdown-toc markdown-mode magit-gitflow magit-popup macrostep lorem-ipsum livid-mode skewer-mode simple-httpd live-py-mode linum-relative link-hint lean-mode json-mode json-snatcher json-reformat js2-refactor multiple-cursors js2-mode js-doc indent-guide hydra hy-mode hungry-delete htmlize hl-todo highlight-parentheses highlight-numbers parent-mode highlight-indentation helm-themes helm-swoop helm-pydoc helm-projectile helm-mode-manager helm-make projectile helm-gtags helm-gitignore request helm-flx helm-descbinds helm-company helm-c-yasnippet helm-ag google-translate golden-ratio gnuplot gitignore-mode gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link git-gutter-fringe+ git-gutter-fringe fringe-helper git-gutter+ git-gutter gh-md ggtags fuzzy flyspell-correct-helm flyspell-correct flycheck-pos-tip flycheck-irony flycheck pkg-info epl flx-ido flx fill-column-indicator fancy-battery eyebrowse expand-region exec-path-from-shell evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-surround evil-search-highlight-persist highlight evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-magit magit transient lv git-commit with-editor evil-lisp-state smartparens evil-indent-plus evil-iedit-state iedit evil-exchange evil-escape evil-ediff evil-args evil-anzu anzu evil goto-chg undo-tree eval-sexp-fu eshell-z eshell-prompt-extras esh-help elisp-slime-nav dumb-jump disaster diminish diff-hl define-word cython-mode company-tern dash-functional tern company-statistics company-quickhelp pos-tip company-irony-c-headers company-irony irony company-anaconda company column-enforce-mode coffee-mode clean-aindent-mode clang-format bind-map bind-key auto-yasnippet yasnippet auto-highlight-symbol auto-dictionary auto-compile packed anaconda-mode pythonic f s aggressive-indent adaptive-wrap ace-window ace-link ace-jump-helm-line helm avy helm-core async ac-ispell auto-complete popup doom-themes dash))))
+    (yapfify xterm-color ws-butler winum which-key web-beautify volatile-highlights visual-fill-column vi-tilde-fringe uuidgen use-package toc-org spaceline powerline smeargle shell-pop restart-emacs rainbow-delimiters pyvenv pytest pyenv-mode py-isort px popwin pip-requirements pcre2el paradox spinner orgit org-projectile org-category-capture org-present org-pomodoro alert log4e gntp org-pdfview pdf-tools tablist org-mime org-download org-bullets open-junk-file neotree multi-term move-text mmm-mode markdown-toc markdown-mode magit-gitflow magit-popup macrostep lorem-ipsum livid-mode skewer-mode simple-httpd live-py-mode linum-relative link-hint lean-mode json-mode json-snatcher json-reformat js2-refactor multiple-cursors js2-mode js-doc indent-guide hydra hy-mode hungry-delete htmlize hl-todo highlight-parentheses highlight-numbers parent-mode highlight-indentation helm-themes helm-swoop helm-pydoc helm-projectile helm-mode-manager helm-make projectile helm-gtags helm-gitignore request helm-flx helm-descbinds helm-company helm-c-yasnippet helm-ag google-translate golden-ratio gnuplot gitignore-mode gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link git-gutter-fringe+ git-gutter-fringe fringe-helper git-gutter+ git-gutter gh-md ggtags fuzzy flyspell-correct-helm flyspell-correct flycheck-pos-tip flycheck-irony flycheck pkg-info epl flx-ido flx fill-column-indicator fancy-battery eyebrowse expand-region exec-path-from-shell evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-surround evil-search-highlight-persist highlight evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-magit magit transient lv git-commit with-editor evil-lisp-state smartparens evil-indent-plus evil-iedit-state iedit evil-exchange evil-escape evil-ediff evil-args evil-anzu anzu evil goto-chg undo-tree eval-sexp-fu eshell-z eshell-prompt-extras esh-help elisp-slime-nav dumb-jump disaster diminish diff-hl define-word cython-mode company-tern dash-functional tern company-statistics company-quickhelp pos-tip company-irony-c-headers company-irony irony company-anaconda company column-enforce-mode coffee-mode clean-aindent-mode bind-map bind-key auto-yasnippet yasnippet auto-highlight-symbol auto-dictionary auto-compile packed anaconda-mode pythonic f s aggressive-indent adaptive-wrap ace-window ace-link ace-jump-helm-line helm avy helm-core async ac-ispell auto-complete popup doom-themes dash))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
