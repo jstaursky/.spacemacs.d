@@ -270,7 +270,8 @@ It should only modify the values of Spacemacs settings."
 
    ;; Default font, or prioritized list of fonts. `powerline-scale' allows to
    ;; quickly tweak the mode-line size to make separators look not too crappy.
-   dotspacemacs-default-font '("Courier Prime Code"
+   dotspacemacs-default-font '("Operator Mono"
+                               ;"Courier Prime Code"
                                ;"Courier Code"
                                ;"Noto Sans Mono"
                                ;"Source Code Pro"
@@ -561,24 +562,11 @@ before packages are loaded."
 
   ;; C-C++ CONFIGURATIONS
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
+  (setq c-default-style "linux")
   (setq c-basic-offset 4)
-
-  (use-package irony
-    :config
-    (setq irony-additional-clang-options '("-std=c++11"))
-    )
+  (setq c-continued-statement-offset 4)
 
   ;; Undecided whether to add semantic into conf-c-c++ layer
-  (use-package semantic
-    :init
-    (add-hook 'c-mode-common-hook
-      (lambda ()
-        (add-to-list 'semantic-default-submodes
-                     'global-semantic-stickyfunc-mode)
-        (semantic-mode 1)
-        ))
-    )
 
   (use-package x86-lookup
     :ensure t
@@ -598,21 +586,6 @@ before packages are loaded."
     :config
     (setq disaster-objdump "objdump -d -M intel -m i386 -Sl --no-show-raw-insn")
     (setq disaster-cflags "-m32")
-    )
-
-  (use-package clang-format
-    :config
-    (defun clang-format-buffer-smart ()
-      "Reformat buffer if .clang-format exists in the projectile root."
-      (when (f-exists? (expand-file-name ".clang-format" (projectile-project-root)))
-        (clang-format-buffer)))
-
-    (defun clang-format-buffer-smart-on-save ()
-      "Add auto-save hook for clang-format-buffer-smart."
-      (add-hook 'before-save-hook 'clang-format-buffer-smart nil t))
-
-    (spacemacs/add-to-hooks 'clang-format-buffer-smart-on-save
-                            '(c-mode-hook c++-mode-hook))
     )
 
   ;; ORG-MODE CONFIGURATIONS

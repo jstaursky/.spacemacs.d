@@ -2,7 +2,4 @@
 ;;; Commentary:
 ;;; Code:
 
-(setq c-default-style "linux")
-(setq c-continued-statement-offset 4)
-
 
