@@ -10,6 +10,7 @@
     (clang-format-region
      s e (concat
           "{ "
+          ;;"BasedOnStyle: LLVM,"
           "AccessModifierOffset: -4,"
           "AlignAfterOpenBracket: Align,"
           "AlignConsecutiveAssignments: false,"
@@ -29,6 +30,7 @@
           "AlwaysBreakTemplateDeclarations: false,"
           "BinPackArguments: true,"
           "BinPackParameters: true,"
+          "BreakBeforeBraces: Custom,"
           "BraceWrapping: "
           "{"
           "  AfterClass: false,"
@@ -48,12 +50,10 @@
           "  SplitEmptyNamespace: true"
           " }, "
           "BreakBeforeBinaryOperators: None,"
-          "BreakBeforeBraces: Custom,"
           "BreakBeforeInheritanceComma: false,"
           "BreakBeforeTernaryOperators: false,"
           "BreakConstructorInitializersBeforeComma: false,"
           "BreakConstructorInitializers: BeforeComma,"
-          "BreakAfterJavaFieldAnnotations: false,"
           "BreakStringLiterals: false,"
           "ColumnLimit: 80,"
           "CommentPragmas: '^ IWYU pragma:',"
@@ -101,7 +101,7 @@
           "SpacesInParentheses: false,"
           "SpacesInSquareBrackets: false,"
           "Standard: Cpp11,"
-          "TabWidth: 8,"
+          "TabWidth: 4,"
           "UseTab: Always"
           "}"
           )))
