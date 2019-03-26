@@ -8,6 +8,9 @@
     semantic
     company
     irony
+    lsp-mode
+    lsp-ui
+    company-lsp
     (company-irony           :requires company irony)
     (company-irony-c-headers :requires company irony)
     (flycheck-irony          :requires irony)
@@ -21,6 +24,34 @@
   (spacemacs|add-company-backends
     :backends (company-irony company-irony-c-headers company-clang)
     :modes c-mode-common)
+  )
+
+(defun conf-c-c++/init-lsp-mode ()
+  (use-package lsp-mode
+    :commands lsp
+    :init
+    (setq lsp-prefer-flymake nil)
+    (add-hook 'c++-mode-hook #'lsp)
+    (add-hook 'c-mode-hook #'lsp)
+    )
+  )
+
+(defun conf-c-c++/init-lsp-ui ()
+  (use-package lsp-ui :commands lsp-ui-mode
+    :init
+    (setq lsp-ui-doc-enable t
+          lsp-ui-peek-enable t
+          lsp-ui-sideline-enable nil
+          lsp-ui-imenu-enable nil
+          lsp-ui-flycheck-enable t)
+    )
+  )
+
+(defun conf-c-c++/init-company-lsp ()
+  (use-package company-lsp :commands company-lsp
+    :config
+    (push 'company-lsp company-backends)
+    )
   )
 
 (defun conf-c-c++/post-init-semantic ()
