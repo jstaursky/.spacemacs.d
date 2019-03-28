@@ -35,11 +35,14 @@ This function should only modify configuration layer settings."
    dotspacemacs-configuration-layers
    '(javascript
      ;; Private layers
-    (conf-c-c++ :location local)
+     (conf-c-c++ :location local)
      ;; ----------------------------------------------------------------
      ;;; Feature
      git
-
+     ;; (lsp :variables
+     ;;      lsp-remap-xref-keybindings  t
+     ;;      lsp-ui-sideline-enable      nil
+     ;;      )
      gtags
      multiple-cursors
      pdf
@@ -69,7 +72,9 @@ This function should only modify configuration layer settings."
                       auto-completion-tab-key-behavior          'complete)
 
      ;; Lang
-     (c-c++ :packages semantic srefactor stickyfunc-enhance disaster)
+     ;(c-c++ :packages semantic srefactor stickyfunc-enhance disaster)
+     ;; (c-c++ :variables
+     ;;        c-c++-backend 'lsp-ccls)        ; or ccls
      emacs-lisp
      markdown
      org
@@ -87,6 +92,7 @@ This function should only modify configuration layer settings."
    '(
      nasm-mode
      x86-lookup
+     disaster
      base16-theme
      clang-format
      (doom-palenight-theme :location local)
@@ -241,10 +247,11 @@ It should only modify the values of Spacemacs settings."
    ;; List of themes, the first of the list is loaded when spacemacs starts.
    ;; Press `SPC T n' to cycle to the next theme in the list (works great
    ;; with 2 themes variants, one dark and one light)
-   dotspacemacs-themes '(
-                         doom-palenight
-                         weyland-yutani
+   dotspacemacs-themes '(doom-palenight
+                         doom-tomorrow-night
+                         spacemacs-dark
                          base16-material-palenight
+                         weyland-yutani
                          base16-nord
                          doom-spacegrey
                          zerodark
@@ -252,7 +259,6 @@ It should only modify the values of Spacemacs settings."
                          doom-nova
                          doom-nord
                          doom-one
-                         spacemacs-dark
                          spacemacs-light)
 
    ;; Set the theme for the Spaceline. Supported themes are `spacemacs',
@@ -270,7 +276,9 @@ It should only modify the values of Spacemacs settings."
 
    ;; Default font, or prioritized list of fonts. `powerline-scale' allows to
    ;; quickly tweak the mode-line size to make separators look not too crappy.
-   dotspacemacs-default-font '("Operator Mono"
+   dotspacemacs-default-font '("Monaco"
+                               ;"Consolas"
+                               ;"Operator Mono"
                                ;"Courier Prime Code"
                                ;"Courier Code"
                                ;"Noto Sans Mono"
@@ -566,26 +574,58 @@ before packages are loaded."
   (setq c-basic-offset 4)
   (setq c-continued-statement-offset 4)
 
-  ;; Undecided whether to add semantic into conf-c-c++ layer
-
-  (use-package x86-lookup
-    :ensure t
-    :mode "\\.\\(asm\\|s\\)$"
+  (use-package lsp-mode
+    :hook ((c-mode . lsp-mode)
+           (c++-mode . lsp-mode))
     :config
-    (setq  x86-lookup-pdf "~/Dropbox/Code/Intel64-and_IA-32 Architectures-SoftwareDeveloperManual.pdf")
+    (setq lsp-clients-clangd-args
+          '("-all-scopes-completion" "-background-index" "-index"
+            "-completion-style=detailed" "-j=4"))
+    (lsp)
+    )
+
+  (use-package ggtags
+    :hook ((c-mode . ggtags-mode)
+           (c++-mode . ggtags-mode))
+    :config
+    (spacemacs/set-leader-keys-for-major-mode 'c-mode
+      "gc" 'helm-gtags-create-tags
+      "gs" 'helm-gtags-select
+      "gS" 'helm-gtags-show-stack
+      "gf" 'helm-gtags-select-path
+      "gg" 'ggtags-find-file)
+    (spacemacs/set-leader-keys-for-major-mode 'c++-mode
+      "gc" 'helm-gtags-create-tags
+      "gs" 'helm-gtags-select
+      "gS" 'helm-gtags-show-stack
+      "gf" 'helm-gtags-select-path
+      "gg" 'ggtags-find-file)
+    )
+
+
+  (use-package disaster
+    :defer t
+    :commands (disaster)
+    :init
+    (spacemacs/set-leader-keys-for-major-mode 'c-mode
+      "D" 'disaster)
+    (spacemacs/set-leader-keys-for-major-mode 'c++-mode
+      "D" 'disaster)
+    :config
+    (setq disaster-objdump "objdump -d -M intel -m i386 -Sl --no-show-raw-insn")
+    (setq disaster-cflags "-m32")
     )
 
   (use-package nasm-mode
-    :ensure t
     :config
     (spacemacs/set-leader-keys-for-major-mode 'nasm-mode "h" 'x86-lookup)
     (add-hook 'asm-mode-hook 'nasm-mode)
     )
 
-  (use-package disaster
+  (use-package x86-lookup
+    :mode "\\.\\(asm\\|s\\)$"
     :config
-    (setq disaster-objdump "objdump -d -M intel -m i386 -Sl --no-show-raw-insn")
-    (setq disaster-cflags "-m32")
+    (setq  x86-lookup-pdf "~/Dropbox/Code/Intel64-and_IA-32 Architectures-SoftwareDeveloperManual.pdf")
     )
 
   ;; ORG-MODE CONFIGURATIONS

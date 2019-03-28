@@ -105,3 +105,25 @@
           "UseTab: Always"
           "}"
           )))
+
+(defun spacemacs/lsp-define-key (keymap key def &rest bindings)
+  "Define multiple key bindings with KEYMAP KEY DEF BINDINGS."
+  (interactive)
+  (while key
+    (define-key keymap (kbd key) def)
+    (setq key (pop bindings)
+          def (pop bindings))))
+
+(defun spacemacs/lsp-bind-keys ()
+  "Define key bindings for the lsp minor mode."
+  (spacemacs//lsp-bind-peek-navigation-functions "g")
+)
+
+(defun spacemacs//lsp-bind-peek-navigation-functions (prefix-char)
+  (spacemacs/set-leader-keys-for-minor-mode 'lsp-mode
+    (concat prefix-char "i") #'lsp-ui-peek-find-implementation
+    (concat prefix-char "d") #'lsp-ui-peek-find-definitions
+    (concat prefix-char "r") #'lsp-ui-peek-find-references
+    (concat prefix-char "p") #'lsp-ui-peek-jump-backward
+    (concat prefix-char "n") #'lsp-ui-peek-jump-forward)
+  )

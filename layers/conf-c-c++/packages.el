@@ -4,13 +4,13 @@
 
 (defconst conf-c-c++-packages
   '(
+    cc-mode
     clang-format
-    semantic
     company
     irony
     lsp-mode
     lsp-ui
-    company-lsp
+    (company-lsp             :requires company)
     (company-irony           :requires company irony)
     (company-irony-c-headers :requires company irony)
     (flycheck-irony          :requires irony)
@@ -22,41 +22,82 @@
 
 (defun conf-c-c++/post-init-company ()
   (spacemacs|add-company-backends
-    :backends (company-irony company-irony-c-headers company-clang)
+    :backends (company-lsp company-irony company-irony-c-headers company-clang)
     :modes c-mode-common)
   )
 
+(defun conf-c-c++/init-cc-mode ()
+  (use-package cc-mode
+    :defer t
+    :init
+    (progn
+      (add-to-list 'auto-mode-alist
+                   `("\\.h\\'" . ,c-c++-default-mode-for-headers)))
+    :config
+    (progn
+      (require 'compile)
+      (c-toggle-auto-newline 1)
+      (spacemacs/set-leader-keys-for-major-mode 'c-mode
+        "ga" 'projectile-find-other-file
+        "gA" 'projectile-find-other-file-other-window)
+      (spacemacs/set-leader-keys-for-major-mode 'c++-mode
+        "ga" 'projectile-find-other-file
+        "gA" 'projectile-find-other-file-other-window))))
+
 (defun conf-c-c++/init-lsp-mode ()
   (use-package lsp-mode
-    :commands lsp
+    :defer t
     :init
     (setq lsp-prefer-flymake nil)
     (add-hook 'c++-mode-hook #'lsp)
     (add-hook 'c-mode-hook #'lsp)
-    )
-  )
+
+    (setq lsp-clients-clangd-args '(
+                                   "-background-index"
+                                   ;; "-index"
+                                   ;; "-suggest-missing-includes"
+                                   ;;  "-completion-style=detailed"
+                                    ))
+    :config
+    (require 'lsp-clients)
+    (spacemacs/set-leader-keys-for-major-mode 'c-mode
+      "ga" 'projectile-find-other-file
+      "gA" 'projectile-find-other-file-other-window)
+    (spacemacs/set-leader-keys-for-major-mode 'c++-mode
+      "ga" 'projectile-find-other-file
+      "gA" 'projectile-find-other-file-other-window)
+    ))
+
 
 (defun conf-c-c++/init-lsp-ui ()
-  (use-package lsp-ui :commands lsp-ui-mode
+  (use-package lsp-ui
+    :defer t
     :init
     (setq lsp-ui-doc-enable t
           lsp-ui-peek-enable t
           lsp-ui-sideline-enable nil
-          lsp-ui-imenu-enable nil
+          lsp-ui-imenu-enable t
           lsp-ui-flycheck-enable t)
-    )
-  )
+    :config
+    (if lsp-remap-xref-keybindings
+        (progn (define-key lsp-ui-mode-map [remap xref-find-definitions] #'lsp-ui-peek-find-definitions)
+               (define-key lsp-ui-mode-map [remap xref-find-references] #'lsp-ui-peek-find-references)))
+
+    (spacemacs/lsp-define-key
+     lsp-ui-peek-mode-map
+     "h" #'lsp-ui-peek--select-prev-file
+     "j" #'lsp-ui-peek--select-next
+     "k" #'lsp-ui-peek--select-prev
+     "l" #'lsp-ui-peek--select-next-file
+     )
+
+    (spacemacs/lsp-bind-keys)
+    ))
+
 
 (defun conf-c-c++/init-company-lsp ()
-  (use-package company-lsp :commands company-lsp
-    :config
-    (push 'company-lsp company-backends)
-    )
-  )
+  (use-package company-lsp :commands company-lsp))
 
-(defun conf-c-c++/post-init-semantic ()
-  (spacemacs/add-to-hooks 'semantic-mode '(c-mode-hook c++-mode-hook))
-  )
 
 (defun conf-c-c++/init-clang-format ()
   (use-package clang-format
@@ -70,20 +111,14 @@
       "Add auto-save hook for clang-format-buffer-smart."
       (add-hook 'before-save-hook 'clang-format-buffer-smart nil t))
 
-    (spacemacs/add-to-hooks 'clang-format-buffer-smart-on-save
-                            '(c-mode-hook c++-mode-hook)))
-  )
+    (spacemacs/add-to-hooks 'clang-format-buffer-smart-on-save '(c-mode-hook c++-mode-hook))
 
-(defun conf-c-c++/init-semantic ()
-  (use-package semantic
-    :init
-    (add-hook
-     'c-mode-common-hook (lambda () (add-to-list
-                                     'semantic-default-submodes
-                                     'global-semantic-stickyfunc-mode)
-                           (semantic-mode 1)))
-    )
-  )
+    ))
+
+
+(defun conf-c-c++/post-init-semantic ()
+  (spacemacs/add-to-hooks 'semantic-mode '(c-mode-hook c++-mode-hook)))
+
 
 (defun conf-c-c++/init-irony ()
   (use-package irony
@@ -112,5 +147,4 @@
       :init   (add-hook 'flycheck-mode-hook #'flycheck-irony-setup)
       :config (setq flycheck-clang-language-standard "c++11")
       ))
-
 
