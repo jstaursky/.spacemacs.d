@@ -5,7 +5,7 @@
 ;; Copyright (C) 2014 , Joe Staursky
 
 ;; Author: Joe Staursky
-;; 
+;;
 ;; Version: 0.1
 ;; Package-Requires: ((emacs "24"))
 ;; Created with emacs-theme-generator, https://github.com/mswift42/theme-creator.
@@ -36,7 +36,7 @@
        (fg2 "#9299a8")
        (fg3 "#848b98")
        (fg4 "#777d88")
-       (bg1 "#141e20")
+       (bg1 "#182225")
        (bg2 "#232d2f")
        (bg3 "#333c3e")
        (bg4 "#444d4e")
